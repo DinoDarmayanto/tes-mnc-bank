@@ -8,13 +8,29 @@ import (
 
 type TransaksiRepo interface {
 	AddTransaksi(merchant *model.Transaction) error
-	// GetTransaksiById(id int) (*model.Merchant, error)
-	// GetAllMerchants() ([]model.Merchant, error)
-	// DeleteMerchants(id int) error
+	GetTransaksiById(id int) (*model.Transaction, error)
+	GetAllTransaksi() ([]model.Transaction, error)
 }
 
 type TransaksiRepoImpl struct {
 	db *sql.DB
+}
+
+func (trxRepo *TransaksiRepoImpl) GetTransaksiById(id int) (*model.Transaction, error) {
+	qry := "SELECT id, customer_id, merchant_id, amount, transaction_time FROM transactions WHERE id = $1"
+
+	row := trxRepo.db.QueryRow(qry, id)
+
+	trx := &model.Transaction{}
+	err := row.Scan(&trx.ID, &trx.CustomerID, &trx.MerchantID, &trx.Amount, &trx.TransactionTime)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("error on TransaksiRepoImpl.GetTransaksiById(): %w", err)
+	}
+
+	return trx, nil
 }
 
 func (trxRepo *TransaksiRepoImpl) AddTransaksi(Trx *model.Transaction) error {
@@ -27,6 +43,27 @@ func (trxRepo *TransaksiRepoImpl) AddTransaksi(Trx *model.Transaction) error {
 	}
 
 	return nil
+}
+func (trxRepo *TransaksiRepoImpl) GetAllTransaksi() ([]model.Transaction, error) {
+	qry := "SELECT id, customer_id, merchant_id, amount, transaction_time FROM transactions"
+
+	rows, err := trxRepo.db.Query(qry)
+	if err != nil {
+		return nil, fmt.Errorf("error on TransaksiRepoImpl.GetAllTransaksi(): %w", err)
+	}
+	defer rows.Close()
+
+	transactions := []model.Transaction{}
+	for rows.Next() {
+		trx := model.Transaction{}
+		err := rows.Scan(&trx.ID, &trx.CustomerID, &trx.MerchantID, &trx.Amount, &trx.TransactionTime)
+		if err != nil {
+			return nil, fmt.Errorf("error on TransaksiRepoImpl.GetAllTransaksi(): %w", err)
+		}
+		transactions = append(transactions, trx)
+	}
+
+	return transactions, nil
 }
 
 func NewTransaksiRepo(db *sql.DB) TransaksiRepo {

@@ -23,6 +23,7 @@ func (s *server) Run() {
 	NewCustomerHandler(s.engine, s.usecaseManager.GetCustomerUsecase())
 	NewMerchantsHandler(s.engine, s.usecaseManager.GetMerchantsUsecase())
 	NewTransaksiHandler(s.engine, s.usecaseManager.GetTransaksiUsecase())
+	NewLoginHandler(s.engine, s.usecaseManager.GetLoginUsecase())
 
 	s.engine.Run(":8080")
 }
